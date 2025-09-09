@@ -3,7 +3,7 @@ import { SiSolana, SiEthereum } from "react-icons/si";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 // @ts-ignore
-// Icons as components
+
 const ChevronDown = () => (
   <svg
     className="w-5 h-5"
@@ -243,14 +243,14 @@ const WalletGenerator = () => {
     "60": "Ethereum",
   };
 
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard!");
   };
 
-  const togglePrivateKeyVisibility = (index) => {
-    setVisiblePrivateKeys((prev) =>
-      prev.map((visible, i) => (i === index ? !visible : visible))
+  const togglePrivateKeyVisibility = (index: any) => {
+    setVisiblePrivateKeys((prev: any) =>
+      prev.map((visible: any, i: any) => (i === index ? !visible : visible))
     );
   };
 
@@ -296,7 +296,7 @@ const WalletGenerator = () => {
     toast.success("New wallet added!");
   };
 
-  const handleDeleteWallet = (index) => {
+  const handleDeleteWallet = (index: any) => {
     const updatedWallets = wallets.filter((_, i) => i !== index);
     setWallets(updatedWallets);
     setVisiblePrivateKeys(visiblePrivateKeys.filter((_, i) => i !== index));
@@ -580,9 +580,9 @@ const WalletGenerator = () => {
                         <label className="block text-sm font-medium text-gray-400 mb-2">
                           Private Key
                         </label>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 overflow-hidden">
                           <div
-                            className="flex-1 bg-gray-700/50 rounded-lg p-3 font-mono text-sm cursor-pointer hover:bg-gray-700/70 transition-colors"
+                            className="flex-1 bg-gray-700/50 rounded-lg p-3 font-mono text-sm cursor-pointer hover:bg-gray-700/70 transition-colors whitespace-nowrap overflow-hidden text-ellipsis"
                             onClick={() => copyToClipboard(wallet.privateKey)}
                           >
                             {visiblePrivateKeys[index]
@@ -590,13 +590,15 @@ const WalletGenerator = () => {
                               : "•".repeat(32)}
                             <Copy className="inline ml-2 w-3 h-3 opacity-50" />
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => togglePrivateKeyVisibility(index)}
-                          >
-                            {visiblePrivateKeys[index] ? <EyeOff /> : <Eye />}
-                          </Button>
+                          <div className="shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => togglePrivateKeyVisibility(index)}
+                            >
+                              {visiblePrivateKeys[index] ? <EyeOff /> : <Eye />}
+                            </Button>
+                          </div>
                         </div>
                       </div>
 
