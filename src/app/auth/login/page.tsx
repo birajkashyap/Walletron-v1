@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -13,11 +14,13 @@ export default function LoginPage() {
   };
 
   const handleLogin = async () => {
+    setLoading(true);
     const res = await signIn("credentials", {
       email: form.email,
       password: form.password,
       redirect: false,
     });
+    setLoading(false);
 
     if (res?.ok) router.push("/dashboard");
     else alert("Login failed");
@@ -55,10 +58,11 @@ export default function LoginPage() {
         </div>
 
         <button
+          disabled={loading}
           onClick={handleLogin}
           className="w-full bg-gray-100 text-black font-semibold py-2 rounded-md"
         >
-          Continue
+          {loading ? "Signing in..." : "Continue"}
         </button>
 
         <div className="text-center text-sm mt-4 text-gray-400">
