@@ -62,7 +62,7 @@
 
 ---
 
-## ⚙️ Setup Instructions
+## Setup Instructions
 
 ### 1. Clone the Repository
 
@@ -103,7 +103,7 @@ Then visit: [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 | Method | Endpoint              | Description                        |
 | ------ | --------------------- | ---------------------------------- |
@@ -150,6 +150,6 @@ You can also self-host using:
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the **MIT License**.
