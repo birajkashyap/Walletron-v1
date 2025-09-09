@@ -45,13 +45,14 @@ const MoonIcon = () => (
   </svg>
 );
 
-type ThemeToggleProps = {
-  theme: "light" | "dark"; // your theme type
-  setTheme: (theme: "light" | "dark") => void; // setter function
+type NavbarProps = {
+  theme: "light" | "dark";
+  setTheme: (theme: "light" | "dark") => void;
+  onNavigate: (page: "home" | "dashboard") => void; // add type for navigation
 };
 
 // Main Navbar component
-const Navbar = ({ theme, setTheme }: ThemeToggleProps) => {
+const Navbar = ({ theme, setTheme, onNavigate }: NavbarProps) => {
   const isDark = theme === "dark";
   return (
     <motion.nav
@@ -66,8 +67,8 @@ const Navbar = ({ theme, setTheme }: ThemeToggleProps) => {
       <div className="flex items-center space-x-8">
         <span className="text-xl font-bold">Walletron</span>
         <div className="hidden md:flex space-x-6 text-sm">
-          <a
-            href="#"
+          <button
+            onClick={() => onNavigate("home")}
             className={`transition-colors duration-200 ${
               isDark
                 ? "text-gray-300 hover:text-white"
@@ -75,9 +76,9 @@ const Navbar = ({ theme, setTheme }: ThemeToggleProps) => {
             }`}
           >
             Home
-          </a>
-          <a
-            href="#"
+          </button>
+          <button
+            onClick={() => onNavigate("dashboard")}
             className={`transition-colors duration-200 ${
               isDark
                 ? "text-gray-300 hover:text-white"
@@ -85,45 +86,22 @@ const Navbar = ({ theme, setTheme }: ThemeToggleProps) => {
             }`}
           >
             Dashboard
-          </a>
+          </button>
           <a
-            href="#"
+            href="/create-wallet"
             className={`transition-colors duration-200 ${
               isDark
                 ? "text-gray-300 hover:text-white"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
-            Integrate
+            Create a Wallet
           </a>
         </div>
       </div>
 
       {/* Right section: Auth Buttons and Theme Toggle */}
       <div className="flex items-center space-x-4">
-        <Button
-          variant="ghost"
-          href="/auth/login"
-          className={`${
-            isDark
-              ? "text-white hover:text-white hover:bg-white/10"
-              : "text-gray-900 hover:bg-gray-200"
-          }`}
-        >
-          Sign In
-        </Button>
-
-        <Button
-          href="/auth/signup"
-          className={`${
-            isDark
-              ? "bg-white text-black hover:bg-gray-200"
-              : "bg-gray-900 text-white hover:bg-gray-800"
-          } rounded-lg`}
-        >
-          Sign Up
-        </Button>
-
         <ThemeToggle theme={theme} setTheme={setTheme} />
       </div>
     </motion.nav>

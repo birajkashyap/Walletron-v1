@@ -1,8 +1,8 @@
 "use client";
-import { SiSolana, SiEthereum } from "react-icons/si";
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-// @ts-ignore
+
 // Icons as components
 const ChevronDown = () => (
   <svg
@@ -392,18 +392,17 @@ const WalletGenerator = () => {
               <Button
                 size="lg"
                 onClick={() => setPathTypes(["501"])}
-                className="min-w-32 flex items-center justify-center"
+                className="min-w-32"
               >
-                <SiSolana className="mr-2 w-5 h-5" />
+                <span className="mr-2">🟣</span>
                 Solana Wallet
               </Button>
-
               <Button
                 size="lg"
                 onClick={() => setPathTypes(["60"])}
-                className="min-w-32 flex items-center justify-center"
+                className="min-w-32"
               >
-                <SiEthereum className="mr-2 w-5 h-5" />
+                <span className="mr-2">⚡</span>
                 Ethereum Wallet
               </Button>
             </div>
