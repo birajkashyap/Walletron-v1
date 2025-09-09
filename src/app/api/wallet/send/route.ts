@@ -26,7 +26,6 @@ export async function POST(req: NextRequest) {
         ? await sendEth(to, amount.toString())
         : await sendSol(to, amount.toString());
 
-    // ✅ Log success
     await logTransaction({
       type: "send",
       chain,
@@ -38,7 +37,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ status: "success", chain, hash: txHash });
   } catch (e: any) {
-    // ✅ Log error
     await logTransaction({
       type: "send",
       chain,
