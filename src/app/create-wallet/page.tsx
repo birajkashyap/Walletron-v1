@@ -1,12 +1,46 @@
 "use client";
 import { SiSolana, SiEthereum } from "react-icons/si";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-// @ts-ignore
 
-const ChevronDown = () => (
+// Define interfaces
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode;
+  variant?: "default" | "outline" | "ghost" | "destructive";
+  size?: "default" | "lg" | "sm";
+  className?: string;
+}
+
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  className?: string;
+}
+
+interface CardProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface Wallet {
+  publicKey: string;
+  privateKey: string;
+  mnemonic: string;
+  path: string;
+}
+
+interface DeleteDialog {
+  open: boolean;
+  index: number;
+  type: "wallet" | "all";
+}
+
+// Icon component props interface
+interface IconProps {
+  className?: string;
+}
+
+const ChevronDown: React.FC<IconProps> = ({ className = "w-5 h-5" }) => (
   <svg
-    className="w-5 h-5"
+    className={className}
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -20,9 +54,9 @@ const ChevronDown = () => (
   </svg>
 );
 
-const ChevronUp = () => (
+const ChevronUp: React.FC<IconProps> = ({ className = "w-5 h-5" }) => (
   <svg
-    className="w-5 h-5"
+    className={className}
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -36,9 +70,9 @@ const ChevronUp = () => (
   </svg>
 );
 
-const Copy = () => (
+const Copy: React.FC<IconProps> = ({ className = "w-4 h-4" }) => (
   <svg
-    className="w-4 h-4"
+    className={className}
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -52,9 +86,9 @@ const Copy = () => (
   </svg>
 );
 
-const Eye = () => (
+const Eye: React.FC<IconProps> = ({ className = "w-4 h-4" }) => (
   <svg
-    className="w-4 h-4"
+    className={className}
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -63,7 +97,7 @@ const Eye = () => (
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={2}
-      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+      d="M15 12a3 3 0 11-6 0 3 3 0 616 0z"
     />
     <path
       strokeLinecap="round"
@@ -74,9 +108,9 @@ const Eye = () => (
   </svg>
 );
 
-const EyeOff = () => (
+const EyeOff: React.FC<IconProps> = ({ className = "w-4 h-4" }) => (
   <svg
-    className="w-4 h-4"
+    className={className}
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -90,9 +124,9 @@ const EyeOff = () => (
   </svg>
 );
 
-const Trash = () => (
+const Trash: React.FC<IconProps> = ({ className = "w-4 h-4" }) => (
   <svg
-    className="w-4 h-4"
+    className={className}
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -106,9 +140,9 @@ const Trash = () => (
   </svg>
 );
 
-const Plus = () => (
+const Plus: React.FC<IconProps> = ({ className = "w-4 h-4" }) => (
   <svg
-    className="w-4 h-4"
+    className={className}
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -123,7 +157,7 @@ const Plus = () => (
 );
 
 // Custom UI Components
-const Button = ({
+const Button: React.FC<ButtonProps> = ({
   children,
   variant = "default",
   size = "default",
@@ -163,14 +197,14 @@ const Button = ({
   );
 };
 
-const Input = ({ className = "", ...props }) => (
+const Input: React.FC<InputProps> = ({ className = "", ...props }) => (
   <input
     className={`flex h-12 w-full rounded-lg border border-white/20 bg-gray-800/50 backdrop-blur-sm px-4 py-3 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${className}`}
     {...props}
   />
 );
 
-const Card = ({ children, className = "" }) => (
+const Card: React.FC<CardProps> = ({ children, className = "" }) => (
   <div
     className={`bg-gray-800/30 backdrop-blur-lg border border-white/10 rounded-xl p-6 ${className}`}
   >
@@ -180,12 +214,12 @@ const Card = ({ children, className = "" }) => (
 
 // Mock toast function
 const toast = {
-  success: (message) => console.log("Success:", message),
-  error: (message) => console.log("Error:", message),
+  success: (message: string) => console.log("Success:", message),
+  error: (message: string) => console.log("Error:", message),
 };
 
 // Mock crypto functions (replace with actual implementations)
-const generateMnemonic = () => {
+const generateMnemonic = (): string => {
   const words = [
     "abandon",
     "ability",
@@ -206,11 +240,15 @@ const generateMnemonic = () => {
   ).join(" ");
 };
 
-const validateMnemonic = (mnemonic) => {
-  return mnemonic && mnemonic.split(" ").length === 12;
+const validateMnemonic = (mnemonic: string): boolean => {
+  return Boolean(mnemonic && mnemonic.split(" ").length === 12);
 };
 
-const generateWalletFromMnemonic = (pathType, mnemonic, accountIndex) => {
+const generateWalletFromMnemonic = (
+  pathType: string,
+  mnemonic: string,
+  accountIndex: number
+): Wallet => {
   // Mock wallet generation - replace with actual crypto logic
   const mockAddress =
     pathType === "501"
@@ -225,36 +263,38 @@ const generateWalletFromMnemonic = (pathType, mnemonic, accountIndex) => {
   };
 };
 
-const WalletGenerator = () => {
-  const [mnemonicWords, setMnemonicWords] = useState([]);
-  const [pathTypes, setPathTypes] = useState([]);
-  const [wallets, setWallets] = useState([]);
-  const [showMnemonic, setShowMnemonic] = useState(false);
-  const [mnemonicInput, setMnemonicInput] = useState("");
-  const [visiblePrivateKeys, setVisiblePrivateKeys] = useState([]);
-  const [deleteDialog, setDeleteDialog] = useState({
+const WalletGenerator: React.FC = () => {
+  const [mnemonicWords, setMnemonicWords] = useState<string[]>([]);
+  const [pathTypes, setPathTypes] = useState<string[]>([]);
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [showMnemonic, setShowMnemonic] = useState<boolean>(false);
+  const [mnemonicInput, setMnemonicInput] = useState<string>("");
+  const [visiblePrivateKeys, setVisiblePrivateKeys] = useState<boolean[]>([]);
+  const [deleteDialog, setDeleteDialog] = useState<DeleteDialog>({
     open: false,
     index: -1,
     type: "wallet",
   });
 
-  const pathTypeNames = {
+  const pathTypeNames: Record<string, string> = {
     "501": "Solana",
     "60": "Ethereum",
   };
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string): void => {
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard!");
   };
 
-  const togglePrivateKeyVisibility = (index: any) => {
-    setVisiblePrivateKeys((prev: any) =>
-      prev.map((visible: any, i: any) => (i === index ? !visible : visible))
+  const togglePrivateKeyVisibility = (index: number): void => {
+    setVisiblePrivateKeys((prev: boolean[]) =>
+      prev.map((visible: boolean, i: number) =>
+        i === index ? !visible : visible
+      )
     );
   };
 
-  const handleGenerateWallet = () => {
+  const handleGenerateWallet = (): void => {
     let mnemonic = mnemonicInput.trim() || generateMnemonic();
     if (mnemonicInput && !validateMnemonic(mnemonic)) {
       toast.error("Invalid mnemonic phrase");
@@ -268,15 +308,13 @@ const WalletGenerator = () => {
       wallets.length
     );
 
-    if (!wallet) return;
-
     const updatedWallets = [...wallets, wallet];
     setWallets(updatedWallets);
     setVisiblePrivateKeys([...visiblePrivateKeys, false]);
     toast.success("Wallet generated successfully!");
   };
 
-  const handleAddWallet = () => {
+  const handleAddWallet = (): void => {
     if (!mnemonicWords.length) {
       toast.error("No mnemonic phrase found");
       return;
@@ -288,23 +326,25 @@ const WalletGenerator = () => {
       wallets.length
     );
 
-    if (!wallet) return;
-
     const updatedWallets = [...wallets, wallet];
     setWallets(updatedWallets);
     setVisiblePrivateKeys([...visiblePrivateKeys, false]);
     toast.success("New wallet added!");
   };
 
-  const handleDeleteWallet = (index: any) => {
-    const updatedWallets = wallets.filter((_, i) => i !== index);
+  const handleDeleteWallet = (index: number): void => {
+    const updatedWallets = wallets.filter(
+      (_: Wallet, i: number) => i !== index
+    );
     setWallets(updatedWallets);
-    setVisiblePrivateKeys(visiblePrivateKeys.filter((_, i) => i !== index));
+    setVisiblePrivateKeys(
+      visiblePrivateKeys.filter((_: boolean, i: number) => i !== index)
+    );
     setDeleteDialog({ open: false, index: -1, type: "wallet" });
     toast.success("Wallet deleted!");
   };
 
-  const handleClearWallets = () => {
+  const handleClearWallets = (): void => {
     setWallets([]);
     setMnemonicWords([]);
     setPathTypes([]);
@@ -314,7 +354,7 @@ const WalletGenerator = () => {
   };
 
   // Delete confirmation modal
-  const DeleteDialog = () => {
+  const DeleteDialog: React.FC = () => {
     if (!deleteDialog.open) return null;
 
     return (

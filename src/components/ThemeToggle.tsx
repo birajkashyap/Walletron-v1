@@ -1,5 +1,5 @@
 import Button from "./Button";
-import { SunIcon, MoonIcon } from "./navbar";
+import { SunIcon, MoonIcon } from "./Navbar";
 
 type ThemeToggleProps = {
   theme: "light" | "dark"; // your theme type

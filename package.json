@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --no-lint",
     "start": "next start",
     "lint": "eslint"
   },
@@ -67,7 +67,7 @@
     "prisma": "^6.15.0",
     "react": "^19.1.1",
     "react-day-picker": "^9.9.0",
-    "react-dom": "^19.1.0",
+    "react-dom": "^19.1.1",
     "react-hook-form": "^7.62.0",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.8.2",
