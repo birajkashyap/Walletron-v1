@@ -1,92 +1,80 @@
 // src/lib/parse.ts
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 export type ParsedIntent = {
   action: "send" | "balance" | "unknown";
   chain?: "ethereum" | "solana";
   token?: "ETH" | "SOL";
   to?: string;
-  amount?: string; // decimal as string
+  amount?: string;
   note?: string;
 };
 
-export type AddressBook = Record<string, string>; // e.g., { "Alice": "0xabc..." }
+export type AddressBook = Record<string, string>;
 
-const CHAIN_HINTS: Record<"ethereum" | "solana", RegExp[]> = {
-  ethereum: [/\beth(ereum)?\b/i],
-  solana: [/\bsol(ana)?\b/i],
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+
+/**
+ * Uses Gemini API to parse natural language into structured JSON intent.
+ */
+export async function parseNL(input: string): Promise<ParsedIntent> {
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+  const prompt = `
+You are an assistant that converts natural language cryptocurrency commands 
+into a structured JSON object following this TypeScript type:
+
+type ParsedIntent = {
+  action: "send" | "balance" | "unknown";
+  chain?: "ethereum" | "solana";
+  token?: "ETH" | "SOL";
+  to?: string;
+  amount?: string;
+  note?: string;
 };
 
-export function parseNL(input: string): ParsedIntent {
-  const text = input.trim();
-  const lower = text.toLowerCase();
+Rules:
+- If the user asks to transfer, send, or pay, action = "send".
+- If the user asks for balance, holdings, or funds, action = "balance".
+- Infer chain based on mentioned token ("ETH" => ethereum, "SOL" => solana).
+- Return "unknown" if unsure.
+- Respond only with valid JSON, no explanations.
 
-  // 1. action
-  let action: ParsedIntent["action"] = /(send|transfer|pay)\b/i.test(text)
-    ? "send"
-    : /(balance|how much|holdings|funds)\b/i.test(text)
-    ? "balance"
-    : "unknown";
+Now parse this input:
+"${input}"
+`;
 
-  // 2. chain inference
-  let chain: ParsedIntent["chain"] | undefined;
-  if (CHAIN_HINTS.ethereum.some((r) => r.test(text))) chain = "ethereum";
-  if (CHAIN_HINTS.solana.some((r) => r.test(text))) chain = "solana";
+  try {
+    const result = await model.generateContent(prompt);
+    const response = result.response.text();
 
-  // 3. token inference (also sets chain)
-  let token: ParsedIntent["token"] | undefined;
-  if (/\beth\b/i.test(text)) {
-    token = "ETH";
-    chain ??= "ethereum";
+    // Clean and safely parse
+    const jsonStart = response.indexOf("{");
+    const jsonEnd = response.lastIndexOf("}");
+    const jsonString = response.slice(jsonStart, jsonEnd + 1);
+
+    const parsed: ParsedIntent = JSON.parse(jsonString);
+
+    return parsed;
+  } catch (error) {
+    console.error("Gemini parsing error:", error);
+    return { action: "unknown" };
   }
-  if (/\bsol\b/i.test(text)) {
-    token = "SOL";
-    chain ??= "solana";
-  }
-
-  // 4. amount extraction (e.g., "0.5 ETH", "send 2 sol")
-  const mAmt = text.match(/(\d+(?:[.,]\d+)?)(?=\s*(eth|sol|\b))/i);
-  const amount = mAmt ? mAmt[1].replace(",", ".") : undefined;
-
-  // 5. recipient address or name (after "to <...>")
-  const mTo = text.match(/\bto\s+([^\s,\.]+)\b/i);
-  const to = mTo ? mTo[1] : undefined;
-
-  // 6. note (optional) — after "for", "because", or "note"
-  const mNote = lower.match(/\b(?:for|because|note)\s+(.+)$/i);
-  const note = mNote ? mNote[1] : undefined;
-
-  // Fallback: if token present but amount missing (e.g., "send .5 eth")
-  if (!amount) {
-    const m = text.match(/\b(eth|sol)\b/i);
-    if (m && /\b(\d*[.,]?\d+)\b/.test(text)) {
-      const n = text.match(/\b(\d*[.,]?\d+)\b/);
-      if (n) {
-        const num = n[1]!.replace(",", ".");
-        return { action, chain, token, to, amount: num, note };
-      }
-    }
-  }
-
-  return { action, chain, token, to, amount, note };
 }
 
-// --------------------------------------------
-// Optional: Resolve named users via addressBook
-// --------------------------------------------
+/**
+ * Resolves names to addresses, same as before.
+ */
 export function resolveRecipient(
   to: string | undefined,
   addressBook?: AddressBook
 ): string | undefined {
   if (!to) return undefined;
 
-  // If it's a valid ETH address (0x...)
-  if (/^0x[a-fA-F0-9]{40}$/.test(to)) return to;
-
-  // Solana (base58) heuristic
-  if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(to)) return to;
-
-  // Name resolution
+  if (/^0x[a-fA-F0-9]{40}$/.test(to)) return to; // Ethereum
+  if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(to)) return to; // Solana
   if (addressBook && addressBook[to]) return addressBook[to];
 
-  return to; // fallback (let blockchain SDKs fail if needed)
+  return to;
 }

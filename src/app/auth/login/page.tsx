@@ -15,15 +15,21 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     setLoading(true);
+
     const res = await signIn("credentials", {
       email: form.email,
       password: form.password,
       redirect: false,
+      callbackUrl: "/dashboard",
     });
+
     setLoading(false);
 
-    if (res?.ok) router.push("/dashboard");
-    else alert("Login failed");
+    if (res?.ok) {
+      router.push("/dashboard");
+    } else {
+      alert("Login failed");
+    }
   };
 
   return (

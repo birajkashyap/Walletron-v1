@@ -23,8 +23,11 @@ export async function POST(req: NextRequest) {
   }
 
   const { text, addressBook, defaults } = parsed.data;
-  const intent = parseNL(text);
 
+  // await because parseNL() now uses Gemini and returns a Promise
+  const intent = await parseNL(text);
+
+  // infer defaults
   intent.chain ??= defaults?.chain;
   if (!intent.token && intent.chain === "ethereum") intent.token = "ETH";
   if (!intent.token && intent.chain === "solana") intent.token = "SOL";
@@ -32,6 +35,7 @@ export async function POST(req: NextRequest) {
   const resolvedTo = resolveRecipient(intent.to, addressBook);
 
   try {
+    // Handle "balance" action
     if (intent.action === "balance") {
       const chain = intent.chain ?? "ethereum";
       const balance =
@@ -41,14 +45,15 @@ export async function POST(req: NextRequest) {
         type: "balance",
         chain,
         status: "success",
-        to: "self", // required dummy value
-        amount: 0, // dummy for balance
-        hash: "", // optional, if required
+        to: "self",
+        amount: 0,
+        hash: "",
       });
 
       return NextResponse.json({ intent, result: { chain, balance } });
     }
 
+    // ✅ Handle "send" action
     if (intent.action === "send") {
       if (!intent.chain || !intent.amount || !resolvedTo) {
         return NextResponse.json(
@@ -83,11 +88,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    //  Unknown or unhandled intent
     return NextResponse.json(
       { error: "Unsupported or unknown intent", intent },
       { status: 400 }
     );
   } catch (e: any) {
+    //  Error logging
     await logTransaction({
       type:
         intent.action === "send" || intent.action === "balance"

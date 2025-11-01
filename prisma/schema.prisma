@@ -16,6 +16,7 @@ datasource db {
 
 model TxLog {
   id        String   @id @default(cuid())
+  userId    String?   // optional for demo
   type      String
   chain     String
   to        String
@@ -27,6 +28,7 @@ model TxLog {
 
 model NLIntent {
   id        String   @id @default(cuid())
+  userId    String?  
   userInput String
   parsed    Json
   result    Json?
@@ -40,8 +42,4 @@ model User {
   firstname String?
   lastname  String?
   createdAt DateTime @default(now())
-  walletIdx Int?
-  publicKey String?
-  apiKey    String?
-
 }
