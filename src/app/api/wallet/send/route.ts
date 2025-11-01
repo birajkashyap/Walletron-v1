@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendEth } from "@/lib/ethereum";
 import { sendSol } from "@/lib/solana";
 import { logTransaction } from "@/lib/logger";
+import { resolveRecipient } from "@/lib/parse";
 import { z } from "zod";
 
 const SendSchema = z.object({
@@ -20,16 +21,25 @@ export async function POST(req: NextRequest) {
 
   const { chain, to, amount } = parsed.data;
 
+  // ✅ Resolve (Name → Address OR raw address)
+  const resolvedTo = resolveRecipient(to);
+
+  // ✅ Type guard
+  if (!resolvedTo || typeof resolvedTo !== "string") {
+    return NextResponse.json({ error: "Invalid recipient" }, { status: 400 });
+  }
+
   try {
+    // ✅ Actual send
     const txHash =
       chain === "ethereum"
-        ? await sendEth(to, amount.toString())
-        : await sendSol(to, amount.toString());
+        ? await sendEth(resolvedTo, amount.toString())
+        : await sendSol(resolvedTo, amount.toString());
 
     await logTransaction({
       type: "send",
       chain,
-      to,
+      to: resolvedTo,
       amount,
       hash: txHash,
       status: "success",
@@ -40,7 +50,7 @@ export async function POST(req: NextRequest) {
     await logTransaction({
       type: "send",
       chain,
-      to,
+      to: resolvedTo,
       amount,
       status: "error",
     });

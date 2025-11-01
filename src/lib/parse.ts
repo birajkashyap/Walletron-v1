@@ -1,6 +1,7 @@
 // src/lib/parse.ts
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { ADDRESS_BOOK } from "./addressBook";
 
 export type ParsedIntent = {
   action: "send" | "balance" | "unknown";
@@ -11,19 +12,13 @@ export type ParsedIntent = {
   note?: string;
 };
 
-export type AddressBook = Record<string, string>;
-
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-/**
- * Uses Gemini API to parse natural language into structured JSON intent.
- */
 export async function parseNL(input: string): Promise<ParsedIntent> {
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const prompt = `
-You are an assistant that converts natural language cryptocurrency commands 
-into a structured JSON object following this TypeScript type:
+Parse this crypto wallet command into JSON:
 
 type ParsedIntent = {
   action: "send" | "balance" | "unknown";
@@ -35,46 +30,59 @@ type ParsedIntent = {
 };
 
 Rules:
-- If the user asks to transfer, send, or pay, action = "send".
-- If the user asks for balance, holdings, or funds, action = "balance".
-- Infer chain based on mentioned token ("ETH" => ethereum, "SOL" => solana).
-- Return "unknown" if unsure.
-- Respond only with valid JSON, no explanations.
+- Transfer/Send/Pay -> "send"
+- Balance/holdings/funds -> "balance"
+- ETH => chain: "ethereum", token: "ETH"
+- SOL => chain: "solana", token: "SOL"
+- Respond ONLY with JSON. No comments.
 
-Now parse this input:
-"${input}"
+User input: "${input}"
 `;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = result.response.text();
+    const res = await model.generateContent(prompt);
+    const raw = res.response.text();
 
-    // Clean and safely parse
-    const jsonStart = response.indexOf("{");
-    const jsonEnd = response.lastIndexOf("}");
-    const jsonString = response.slice(jsonStart, jsonEnd + 1);
+    const json = raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1);
+    const parsed = JSON.parse(json);
 
-    const parsed: ParsedIntent = JSON.parse(jsonString);
+    // ✅ normalize and infer safely
+    const intent: ParsedIntent = {
+      action: parsed.action?.toLowerCase() || "unknown",
+      chain: parsed.chain,
+      token: parsed.token,
+      to: parsed.to,
+      amount: parsed.amount,
+      note: parsed.note,
+    };
 
-    return parsed;
-  } catch (error) {
-    console.error("Gemini parsing error:", error);
+    // Fallback logic
+    if (!intent.chain && intent.token === "ETH") intent.chain = "ethereum";
+    if (!intent.chain && intent.token === "SOL") intent.chain = "solana";
+
+    return intent;
+  } catch (err) {
+    console.error("[Gemini parse error]", err);
     return { action: "unknown" };
   }
 }
 
-/**
- * Resolves names to addresses, same as before.
- */
-export function resolveRecipient(
-  to: string | undefined,
-  addressBook?: AddressBook
-): string | undefined {
+export function resolveRecipient(to?: string) {
   if (!to) return undefined;
 
-  if (/^0x[a-fA-F0-9]{40}$/.test(to)) return to; // Ethereum
-  if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(to)) return to; // Solana
-  if (addressBook && addressBook[to]) return addressBook[to];
+  // If "Ananya" → find address by name
+  const byName = Object.entries(ADDRESS_BOOK).find(
+    ([, name]) => name.toLowerCase() === to.toLowerCase()
+  );
+  if (byName) return byName[0];
 
+  //  If already a valid wallet address
+  if (/^0x[a-fA-F0-9]{40}$/.test(to)) return to;
+  if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(to)) return to;
+
+  // ❗ If user enters address that happens to match a KEY in map
+  if (ADDRESS_BOOK[to]) return to;
+
+  // ❓ unknown → return raw (frontend will confirm)
   return to;
 }
