@@ -1,6 +1,5 @@
 // src/lib/parse.ts
-
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { ADDRESS_BOOK } from "./addressBook";
 
 export type ParsedIntent = {
@@ -12,41 +11,45 @@ export type ParsedIntent = {
   note?: string;
 };
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY!,
+});
 
 export async function parseNL(input: string): Promise<ParsedIntent> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
   const prompt = `
-Parse this crypto wallet command into JSON:
+You are a crypto wallet parser. Convert the user command into JSON.
 
-type ParsedIntent = {
-  action: "send" | "balance" | "unknown";
-  chain?: "ethereum" | "solana";
-  token?: "ETH" | "SOL";
-  to?: string;
-  amount?: string;
-  note?: string;
-};
+Type:
+{
+  "action": "send" | "balance" | "unknown",
+  "chain"?: "ethereum" | "solana",
+  "token"?: "ETH" | "SOL",
+  "to"?: string,
+  "amount"?: string,
+  "note"?: string
+}
 
 Rules:
-- Transfer/Send/Pay -> "send"
-- Balance/holdings/funds -> "balance"
-- ETH => chain: "ethereum", token: "ETH"
-- SOL => chain: "solana", token: "SOL"
-- Respond ONLY with JSON. No comments.
+- send / transfer / pay → "send"
+- balance / holdings → "balance"
+- ETH → ethereum
+- SOL → solana
+- Respond ONLY with JSON.
 
-User input: "${input}"
+User: "${input}"
 `;
 
   try {
-    const res = await model.generateContent(prompt);
-    const raw = res.response.text();
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
 
-    const json = raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1);
+    const text = response.text ?? "{}";
+
+    const json = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
     const parsed = JSON.parse(json);
 
-    // ✅ normalize and infer safely
     const intent: ParsedIntent = {
       action: parsed.action?.toLowerCase() || "unknown",
       chain: parsed.chain,
@@ -56,7 +59,6 @@ User input: "${input}"
       note: parsed.note,
     };
 
-    // Fallback logic
     if (!intent.chain && intent.token === "ETH") intent.chain = "ethereum";
     if (!intent.chain && intent.token === "SOL") intent.chain = "solana";
 
@@ -67,22 +69,18 @@ User input: "${input}"
   }
 }
 
-export function resolveRecipient(to?: string) {
+export function resolveRecipient(to?: string, book?: Record<string, string>) {
   if (!to) return undefined;
+  const map = book || ADDRESS_BOOK;
 
-  // If "Ananya" → find address by name
-  const byName = Object.entries(ADDRESS_BOOK).find(
+  const match = Object.entries(map).find(
     ([, name]) => name.toLowerCase() === to.toLowerCase()
   );
-  if (byName) return byName[0];
+  if (match) return match[0];
 
-  //  If already a valid wallet address
   if (/^0x[a-fA-F0-9]{40}$/.test(to)) return to;
   if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(to)) return to;
+  if (map[to]) return to;
 
-  // ❗ If user enters address that happens to match a KEY in map
-  if (ADDRESS_BOOK[to]) return to;
-
-  // ❓ unknown → return raw (frontend will confirm)
   return to;
 }
