@@ -1,4 +1,3 @@
-// src/app/api/wallet/nl/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { parseNL, resolveRecipient } from "@/lib/parse";
 import { sendEth, getEthBalance } from "@/lib/ethereum";
@@ -16,18 +15,21 @@ const BodySchema = z.object({
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
-  const parsed = BodySchema.safeParse(body);
+  const parsedBody = BodySchema.safeParse(body);
 
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.message }, { status: 400 });
+  if (!parsedBody.success) {
+    return NextResponse.json(
+      { error: parsedBody.error.message },
+      { status: 400 }
+    );
   }
 
-  const { text, addressBook, defaults } = parsed.data;
+  const { text, addressBook, defaults } = parsedBody.data;
 
-  // await because parseNL() now uses Gemini and returns a Promise
+  // ✅ parse NL into intent
   const intent = await parseNL(text);
 
-  // infer defaults
+  // defaults
   intent.chain ??= defaults?.chain;
   if (!intent.token && intent.chain === "ethereum") intent.token = "ETH";
   if (!intent.token && intent.chain === "solana") intent.token = "SOL";
@@ -35,7 +37,34 @@ export async function POST(req: NextRequest) {
   const resolvedTo = resolveRecipient(intent.to, addressBook);
 
   try {
-    // Handle "balance" action
+    // ✅ ANALYTICS HANDLING -------------------------------------------
+    if (intent.action === "analytics") {
+      const { nextUrl } = req;
+      const base = `${nextUrl.protocol}//${nextUrl.host}`;
+
+      const endpoints: Record<string, string> = {
+        "top-recipient": "/api/tx/top-recipient",
+        biggest: "/api/tx/biggest",
+        summary: "/api/tx/summary",
+        history: "/api/tx/history",
+      };
+
+      const path = intent.queryType ? endpoints[intent.queryType] : null;
+
+      if (!path) {
+        return NextResponse.json(
+          { error: "Unknown analytics query", intent },
+          { status: 400 }
+        );
+      }
+
+      const url = `${base}${path}`;
+      const result = await fetch(url).then((r) => r.json());
+
+      return NextResponse.json({ intent, result });
+    }
+
+    // ✅ BALANCE -------------------------------------------------------
     if (intent.action === "balance") {
       const chain = intent.chain ?? "ethereum";
       const balance =
@@ -53,15 +82,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ intent, result: { chain, balance } });
     }
 
-    // ✅ Handle "send" action
+    // ✅ SEND -----------------------------------------------------------
     if (intent.action === "send") {
       if (!intent.chain || !intent.amount || !resolvedTo) {
         return NextResponse.json(
-          {
-            error:
-              "Missing required info to send (chain, amount, or recipient)",
-            intent,
-          },
+          { error: "Missing chain, amount or recipient", intent },
           { status: 400 }
         );
       }
@@ -88,18 +113,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    //  Unknown or unhandled intent
+    // ❓ Unknown intent
     return NextResponse.json(
       { error: "Unsupported or unknown intent", intent },
       { status: 400 }
     );
-  } catch (e: any) {
-    //  Error logging
+  } catch (err: any) {
     await logTransaction({
-      type:
-        intent.action === "send" || intent.action === "balance"
-          ? intent.action
-          : "send",
+      type: intent.action === "send" ? "send" : "balance",
       chain: intent.chain ?? "ethereum",
       to: resolvedTo ?? "unknown",
       amount: parseFloat(intent.amount ?? "0"),
@@ -108,11 +129,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(
-      {
-        status: "error",
-        message: e?.message ?? "Unhandled error",
-        intent,
-      },
+      { status: "error", message: err?.message ?? "Unhandled error", intent },
       { status: 500 }
     );
   }

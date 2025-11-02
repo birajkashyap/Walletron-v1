@@ -97,6 +97,17 @@ const Navbar = ({ theme, setTheme, onNavigate }: NavbarProps) => {
           >
             Create a Wallet
           </a>
+
+          <a
+            href="/chat-wallet"
+            className={`transition-colors duration-200 ${
+              isDark
+                ? "text-gray-300 hover:text-white"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Walletron AI
+          </a>
         </div>
       </div>
 
