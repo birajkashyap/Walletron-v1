@@ -63,16 +63,18 @@ const HeroSection = ({ theme }: ThemeToggleProps) => {
         >
           Try Demo
         </Button>
-        <Button
-          variant="ghost"
-          className={`border rounded-lg ${
-            isDark
-              ? "border-white/20 text-white hover:bg-white/10"
-              : "border-gray-300 text-gray-900 hover:bg-gray-200"
-          }`}
-        >
-          View Documentation
-        </Button>
+        <a href="https://github.com/birajkashyap/Walletron-v1">
+          <Button
+            variant="ghost"
+            className={`border rounded-lg ${
+              isDark
+                ? "border-white/20 text-white hover:bg-white/10"
+                : "border-gray-300 text-gray-900 hover:bg-gray-200"
+            }`}
+          >
+            View Documentation
+          </Button>
+        </a>
       </motion.div>
     </div>
   );
