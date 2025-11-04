@@ -108,6 +108,16 @@ const Navbar = ({ theme, setTheme, onNavigate }: NavbarProps) => {
           >
             Walletron AI
           </a>
+          <a
+            href="/profile"
+            className={`transition-colors duration-200 ${
+              isDark
+                ? "text-gray-300 hover:text-white"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            My Profile
+          </a>
         </div>
       </div>
 

@@ -1,0 +1,12 @@
+# Ignore build & generated files
+
+.next/
+node_modules/
+dist/
+out/
+
+# Ignore generated Prisma & types
+
+src/generated/
+prisma/
+src/types/next-auth.d.ts

@@ -43,3 +43,6 @@ model User {
   lastname  String?
   createdAt DateTime @default(now())
 }
+
+
+

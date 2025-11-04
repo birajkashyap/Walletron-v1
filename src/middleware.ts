@@ -7,5 +7,7 @@ export const config = {
     "/wallet/:path*",
     "/chat/:path*",
     "/create-wallet/:path*",
+    "/chat-wallet/:path*",
+    "/profile/:path*",
   ],
 };

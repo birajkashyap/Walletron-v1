@@ -164,7 +164,7 @@ const Button: React.FC<ButtonProps> = ({
   className = "",
   ...props
 }) => {
-  let baseClasses =
+  const baseClasses =
     "inline-flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 disabled:opacity-50 disabled:pointer-events-none";
 
   let variantClasses = "";
@@ -180,7 +180,7 @@ const Button: React.FC<ButtonProps> = ({
     variantClasses = "bg-red-600 text-white hover:bg-red-700 shadow-lg";
   }
 
-  let sizeClasses =
+  const sizeClasses =
     size === "lg"
       ? "h-12 px-8 text-base"
       : size === "sm"
@@ -295,7 +295,7 @@ const WalletGenerator: React.FC = () => {
   };
 
   const handleGenerateWallet = (): void => {
-    let mnemonic = mnemonicInput.trim() || generateMnemonic();
+    const mnemonic = mnemonicInput.trim() || generateMnemonic();
     if (mnemonicInput && !validateMnemonic(mnemonic)) {
       toast.error("Invalid mnemonic phrase");
       return;
