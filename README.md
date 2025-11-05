@@ -35,8 +35,8 @@
 
 | Layer          | Tech Used                            |
 | -------------- | ------------------------------------ |
-| Frontend       | Next.js 14, Tailwind CSS             |
-| Backend        | Hono, TypeScript                     |
+| Frontend       | Next.js 15, Tailwind CSS             |
+| Backend        | Next.js 15, TypeScript               |
 | Blockchain     | Ethers.js (Ethereum), Solana Web3.js |
 | Database       | PostgreSQL with Prisma ORM           |
 | Authentication | NextAuth.js (Credentials)            |
