@@ -41,17 +41,6 @@ export default function SignupPage() {
           Welcome! Create an account to get started
         </p>
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <button className="bg-[#1f1f1f] py-2 rounded-md flex items-center justify-center gap-2 border border-gray-700">
-            <img src="/google-icon.svg" alt="Google" className="w-5 h-5" />
-            Google
-          </button>
-          <button className="bg-[#1f1f1f] py-2 rounded-md flex items-center justify-center gap-2 border border-gray-700">
-            <img src="/github-icon.svg" alt="Github" className="w-5 h-5" />
-            Github
-          </button>
-        </div>
-
         <hr className="border-gray-700 mb-6" />
 
         <div className="grid grid-cols-2 gap-4">
