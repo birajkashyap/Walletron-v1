@@ -54,15 +54,18 @@ const HeroSection = ({ theme }: ThemeToggleProps) => {
         transition={{ duration: 0.6, delay: 1 }}
         className="flex space-x-4 pt-4"
       >
-        <Button
-          className={`${
-            isDark
-              ? "bg-white text-black hover:bg-gray-200"
-              : "bg-gray-900 text-white hover:bg-gray-800"
-          } rounded-lg shadow-lg`}
-        >
-          Try Demo
-        </Button>
+        <a href="/create-wallet">
+          <Button
+            className={`${
+              isDark
+                ? "bg-white text-black hover:bg-gray-200"
+                : "bg-gray-900 text-white hover:bg-gray-800"
+            } rounded-lg shadow-lg`}
+          >
+            Try Demo
+          </Button>
+        </a>
+
         <a href="https://github.com/birajkashyap/Walletron-v1">
           <Button
             variant="ghost"
