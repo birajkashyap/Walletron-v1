@@ -137,6 +137,10 @@ const SendCryptoModal = ({
       return showToast("Enter valid recipient and amount", "error");
     }
 
+    if (amt > 0.001) {
+      return showToast("Amount must be less than or equal to 0.001", "error");
+    }
+
     // CRITICAL CHANGE: The 'to' field now uses the raw user input,
     // letting the backend (POST /api/wallet/send) handle name resolution.
     const to = recipientInput;

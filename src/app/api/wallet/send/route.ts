@@ -5,10 +5,15 @@ import { logTransaction } from "@/lib/logger";
 import { resolveRecipient } from "@/lib/parse";
 import { z } from "zod";
 
+const MAX_AMOUNT = 0.001;
+
 const SendSchema = z.object({
   chain: z.enum(["ethereum", "solana"]),
   to: z.string(),
-  amount: z.number().positive(),
+  amount: z
+    .number()
+    .positive()
+    .max(MAX_AMOUNT, `Amount must be less than or equal to ${MAX_AMOUNT}`),
 });
 
 export async function POST(req: NextRequest) {
@@ -21,16 +26,16 @@ export async function POST(req: NextRequest) {
 
   const { chain, to, amount } = parsed.data;
 
-  // ✅ Resolve (Name → Address OR raw address)
+  // Resolve (Name → Address OR raw address)
   const resolvedTo = resolveRecipient(to);
 
-  // ✅ Type guard
+  // Type guard
   if (!resolvedTo || typeof resolvedTo !== "string") {
     return NextResponse.json({ error: "Invalid recipient" }, { status: 400 });
   }
 
   try {
-    // ✅ Actual send
+    // Actual send
     const txHash =
       chain === "ethereum"
         ? await sendEth(resolvedTo, amount.toString())
