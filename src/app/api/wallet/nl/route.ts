@@ -91,16 +91,30 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      const amount = parseFloat(intent.amount);
+
+      // Block transactions greater than 0.001
+      if (amount > 0.001) {
+        return NextResponse.json(
+          {
+            error:
+              "Amount too large. Transactions above 0.001 are not allowed.",
+            intent,
+          },
+          { status: 403 }
+        );
+      }
+
       const hash =
         intent.chain === "ethereum"
-          ? await sendEth(resolvedTo, intent.amount)
-          : await sendSol(resolvedTo, intent.amount);
+          ? await sendEth(resolvedTo, amount.toString())
+          : await sendSol(resolvedTo, amount.toString()); // 👈 Convert to string here
 
       await logTransaction({
         type: "send",
         chain: intent.chain,
         to: resolvedTo,
-        amount: parseFloat(intent.amount),
+        amount, // number type is fine here
         hash,
         status: "success",
       });
